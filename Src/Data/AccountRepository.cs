@@ -4,6 +4,7 @@ using AutoMapper;
 using courses_dotnet_api.Src.DTOs.Account;
 using courses_dotnet_api.Src.Interfaces;
 using courses_dotnet_api.Src.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace courses_dotnet_api.Src.Data;
@@ -64,5 +65,25 @@ public class AccountRepository : IAccountRepository
     public async Task<bool> SaveChangesAsync()
     {
         return 0 < await _dataContext.SaveChangesAsync();
+    }
+
+    public async Task<bool> CheckPassword(string email, string password)
+    {
+        User? user = await _dataContext.Users.Where(student => student.Email == email).FirstOrDefaultAsync();
+
+
+//si USER? es nulo, hace el return falsse
+        if(user==null)
+        {
+            return false;
+        }
+//si user es válido
+
+        using var hmac = new HMACSHA512(user.PasswordSalt);
+        var hashedPassword = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+        
+
+        return hashedPassword.SequenceEqual(user.PasswordHash);
+
     }
 }
